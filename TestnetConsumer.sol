@@ -6,7 +6,9 @@ import "https://github.com/smartcontractkit/chainlink/evm-contracts/src/v0.4/ven
 contract ATestnetConsumer is ChainlinkClient, Ownable {
   uint256 constant private ORACLE_PAYMENT = 1 * LINK;
 
-  uint256 public currentPrice;
+  uint256 public currentStateWaves;
+  uint256 public currentStateEth;
+  bool public currentStates;
   int256 public changeDay;
   bytes32 public lastMarket;
 
@@ -19,17 +21,21 @@ contract ATestnetConsumer is ChainlinkClient, Ownable {
     setPublicChainlinkToken();
   }
 
-  function getCurrentPrice() {
-      return currentPrice;
+  function getCurrentStateEth() {
+      return currentStateEth;
+  }
+
+  function getCurrentStateWaves() {
+      return currentStateWaves;
   }
 
     // Основная функция - получает на вход адрес оракула и адрес job. 
-  function requestEthereumPrice(address _oracle, string _jobId)
+  function requestWavesState(address _oracle, string _jobId)
     public
     onlyOwner
   {
       //Создаем объект запросов, указывая метод для записи в наш контракт
-    Chainlink.Request memory req = buildChainlinkRequest(stringToBytes32(_jobId), this, this.fulfillEthereumPrice.selector);
+    Chainlink.Request memory req = buildChainlinkRequest(stringToBytes32(_jobId), this, this.fulfillWavesPrice.selector);
     // Делаем запрос по адресу
     req.add("get", "https://nodes.wavesnodes.com/addresses/data/3PNikM6yp4NqcSU8guxQtmR5onr2D4e8yTJ/rpd_balance_DG2xFkPdDwKUoBkzGAhQtLpSGzfXLiCYPEzeKH2Ad24p_3P7RhLuvncw74sinqGa7SvZYgejXxs5gVyk");
     req.add("path", "value");  // Ищем нужный ключ в пришедшем json
@@ -37,12 +43,34 @@ contract ATestnetConsumer is ChainlinkClient, Ownable {
     sendChainlinkRequestTo(_oracle, req, ORACLE_PAYMENT);
   }
 
+     // Вторая функция получения 
+  function requestEthereumPrice(address _oracle, string _jobId)
+    public
+    onlyOwner
+  {
+      //Создаем объект запросов, указывая метод для записи в наш контракт
+    Chainlink.Request memory req = buildChainlinkRequest(stringToBytes32(_jobId), this, this.fulfillEthereumPrice.selector);
+    // Делаем запрос по адресу
+    req.add("get", "");
+    req.add("path", "");  // Ищем нужный ключ в пришедшем json
+    req.addInt("times", 1000000); // Приводим к нужному формату
+    sendChainlinkRequestTo(_oracle, req, ORACLE_PAYMENT);
+  }
+
+  function handlePrices(address _oracle, string _jobId)
+  public
+  {
+    requestEthereumPrice(_oracle, _jobId);
+    requestWavesPrice(_oracle, _jobId);
+    currentStates = currentStateWaves - currentStateEth;
+  }
+
   function fulfillEthereumPrice(bytes32 _requestId, uint256 _price)
     public
     recordChainlinkFulfillment(_requestId)
   {
     emit RequestEthereumPriceFulfilled(_requestId, _price);
-    currentPrice = _price;
+    currentStateWaves = _price;
   }
 
   function getChainlinkToken() public view returns (address) {
