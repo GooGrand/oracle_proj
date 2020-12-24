@@ -1,0 +1,28 @@
+{
+    "name": "Get > Uint256",
+    "initiators": [
+        {
+            "type": "cron",
+            "params": {
+                "schedule": "CRON_TZ=UTC */1 * * * *"  
+            }
+        }
+    ],
+    "tasks": [
+      {
+        "type": "httpget"
+      },
+      {
+        "type": "jsonparse"
+      },
+      {
+        "type": "multiply"
+      },
+      {
+        "type": "ethuint256"
+      },
+      {
+        "type": "ethtx"
+      }
+    ]
+  }
