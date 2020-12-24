@@ -43,7 +43,7 @@ contract ATestnetConsumer is ChainlinkClient, Ownable {
     sendChainlinkRequestTo(_oracle, req, ORACLE_PAYMENT);
   }
 
-     // Вторая функция получения 
+     // Вторая функция получения данных с ethereum
   function requestEthereumPrice(address _oracle, string _jobId)
     public
     onlyOwner
@@ -51,8 +51,8 @@ contract ATestnetConsumer is ChainlinkClient, Ownable {
       //Создаем объект запросов, указывая метод для записи в наш контракт
     Chainlink.Request memory req = buildChainlinkRequest(stringToBytes32(_jobId), this, this.fulfillEthereumPrice.selector);
     // Делаем запрос по адресу
-    req.add("get", "");
-    req.add("path", "");  // Ищем нужный ключ в пришедшем json
+    req.add("get", "https://supplies.waves.exchange/supplies/USDN");
+    req.add("path", "supplies.1.confirmed");  // Ищем нужный ключ в пришедшем json
     req.addInt("times", 1000000); // Приводим к нужному формату
     sendChainlinkRequestTo(_oracle, req, ORACLE_PAYMENT);
   }
