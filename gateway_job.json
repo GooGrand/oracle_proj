@@ -1,0 +1,32 @@
+{
+    "name": "Get > Uint256",
+    "initiators": [
+        {
+            "type": "cron",
+            "params": {
+                "schedule": "CRON_TZ=UTC */1 * * * *"
+            }
+        }
+    ],
+    "tasks": [
+      {
+        "type": "httpget",
+        "confirmations": 0,
+        "params": {"get": "https://supplies.waves.exchange/supplies/USDN"}
+      },
+      {
+        "type": "jsonparse",
+        "params": { "path": ["supplies", 1, "confirmed"]}
+      },
+      {
+        "type": "multiply",
+        "params": {"times": 1000000}
+      },
+      {
+        "type": "ethuint256"
+      },
+      {
+        "type": "ethtx"
+      }
+    ]
+  }

@@ -1,5 +1,10 @@
-{
-  uint256 constant private ORACLE_PAYMENT = 1 * LINK;
+// SPDX-License-Identifier: MIT
+pragma solidity 0.7.0;
+
+import "https://github.com/smartcontractkit/chainlink/evm-contracts/src/v0.7/ChainlinkClient.sol";
+
+contract ATestnetConsumer is ChainlinkClient {
+  uint256 constant private ORACLE_PAYMENT = 0.1 * 10 ** 18; // 0.1 LINK;
 
   uint256 public currentStateWaves;
   uint256 public currentStateEth;
@@ -22,31 +27,26 @@
   );
   
 
-  constructor() public Ownable() {
+  constructor() {
     setPublicChainlinkToken();
   }
 
     // Основная функция - получает на вход адрес оракула и адрес job. 
-  function requestWavesState(address _oracle, string _jobId)
+  function requestWavesState(address _oracle, string memory _jobId)
     public
-    onlyOwner
   {
       //Создаем объект запросов, указывая метод для записи в наш контракт
-    Chainlink.Request memory req = buildChainlinkRequest(stringToBytes32(_jobId), this, this.fulfillWavesState.selector);
-    // Делаем запрос по адресу
-    req.add("get", "https://nodes.wavesnodes.com/addresses/data/3PNikM6yp4NqcSU8guxQtmR5onr2D4e8yTJ/rpd_balance_DG2xFkPdDwKUoBkzGAhQtLpSGzfXLiCYPEzeKH2Ad24p_3P7RhLuvncw74sinqGa7SvZYgejXxs5gVyk");
-    req.add("path", "value");  // Ищем нужный ключ в пришедшем json
-    req.addInt("times", 1000000); // Приводим к нужному формату
+    Chainlink.Request memory req = buildChainlinkRequest(stringToBytes32(_jobId), address(this), this.fulfillWavesState.selector);
     sendChainlinkRequestTo(_oracle, req, ORACLE_PAYMENT);
   }
 
      // Вторая функция получения данных с ethereum
-  function requestEthereumState(address _oracle, string _jobId)
+  function requestEthereumState(address _oracle, string memory _jobId)
     public
-    onlyOwner
+    returns (bytes32 requestId)
   {
       //Создаем объект запросов, указывая метод для записи в наш контракт
-    Chainlink.Request memory req = buildChainlinkRequest(stringToBytes32(_jobId), this, this.fulfillEthereumState.selector);
+    Chainlink.Request memory req = buildChainlinkRequest(stringToBytes32(_jobId), address(this), this.fulfillEthereumState.selector);
     // Делаем запрос по адресу
     req.add("get", "https://supplies.waves.exchange/supplies/USDN");
     req.add("path", "supplies.1.confirmed");  // Ищем нужный ключ в пришедшем json
@@ -54,7 +54,7 @@
     sendChainlinkRequestTo(_oracle, req, ORACLE_PAYMENT);
   }
 
-  function handlePrices(address _oracle, string _jobId)
+  function handlePrices(address _oracle, string memory _jobId)
   public
   {
     requestEthereumState(_oracle, _jobId);
@@ -82,7 +82,7 @@
     return chainlinkTokenAddress();
   }
 
-  function withdrawLink() public onlyOwner {
+  function withdrawLink() public {
     LinkTokenInterface link = LinkTokenInterface(chainlinkTokenAddress());
     require(link.transfer(msg.sender, link.balanceOf(address(this))), "Unable to transfer");
   }
@@ -94,7 +94,6 @@
     uint256 _expiration
   )
     public
-    onlyOwner
   {
     cancelChainlinkRequest(_requestId, _payment, _callbackFunctionId, _expiration);
   }
@@ -111,21 +110,35 @@
   
 //   Вычисляем цены для платформ
 
-  function calculatePriceMainAsset() {
+  function getCurrentSupplies(address _oracle, string memory _jobId)
+  public
+  {
+    Chainlink.Request memory req = buildChainlinkRequest(stringToBytes32(_jobId), address(this), this.fulfillEthereumState.selector);
+    req.add("get", "https://backend.swop.fi/exchangers/3PHaNgomBkrvEL2QnuJarQVJa71wjw9qiqG"); // Неактуальная (идеал - пользоваться нодой), но рабочая ссылка
+    req.add("path", "supplies.1.confirmed");  // Ищем нужный ключ в пришедшем json
+    req.addInt("times", 1000000); // Приводим к нужному формату
+    sendChainlinkRequestTo(_oracle, req, ORACLE_PAYMENT);
+  }
+
+  function calculatePriceMainAsset() 
+  public
+  {
       uint256 k = supplyA * supplyB;
       int256 b = (-1 * (int256(k) / (int256(supplyA) - int256(amountA)))) + int256(supplyB);
       int256 fee = b * int256(3 / 1000); // 0.3 fee of every transaction
       b = b - fee;
-      b = int256(1/2) * b;  //1 - tolerance -> 1 - 0.5 (of swop.fi) -> 0.5
+      b = int256(5/10) * b;  //1 - tolerance -> 1 - 0.5 (of swop.fi) -> 0.5
       mainAsset = b;
   }
   
-  function calculatePriceSecondaryAsset() {
+  function calculatePriceSecondaryAsset() 
+  public
+  {
       uint256 k = supplyA * supplyB;
       uint256 a = (k / (supplyB - amountB)) + supplyA;
       uint256 fee = a * uint256(3 / 1000);
       a = a - fee;
-      a = uint256(1/2) * a; // (1 - tolerance) * a -> (1 - 0.5) -> 0.5
+      a = uint256(5/10) * a; // (1 - tolerance) * a -> (1 - 0.5) -> 0.5
       secondAsset = a;
   }
 }

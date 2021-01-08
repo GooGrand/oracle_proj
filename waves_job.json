@@ -1,0 +1,32 @@
+{
+    "name": "Get > Uint256",
+    "initiators": [
+        {
+            "type": "cron",
+            "params": {
+                "schedule": "CRON_TZ=UTC */1 * * * *"
+            }
+        }
+    ],
+    "tasks": [
+      {
+        "type": "httpget",
+        "confirmations": 0,
+        "params": {"get": "https://nodes.wavesnodes.com/addresses/data/3PNikM6yp4NqcSU8guxQtmR5onr2D4e8yTJ/rpd_balance_DG2xFkPdDwKUoBkzGAhQtLpSGzfXLiCYPEzeKH2Ad24p_3P7RhLuvncw74sinqGa7SvZYgejXxs5gVyk"}
+      },
+      {
+        "type": "jsonparse",
+        "params": { "path": ["value"]}
+      },
+      {
+        "type": "multiply",
+        "params": {"times": 1000000}
+      },
+      {
+        "type": "ethuint256"
+      },
+      {
+        "type": "ethtx"
+      }
+    ]
+  }

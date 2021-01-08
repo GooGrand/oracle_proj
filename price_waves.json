@@ -4,16 +4,19 @@
         {
             "type": "cron",
             "params": {
-                "schedule": "CRON_TZ=UTC */1 * * * *"  
+                "schedule": "CRON_TZ=UTC */1 * * * *"
             }
         }
     ],
     "tasks": [
       {
-        "type": "httpget"
+        "type": "httpget",
+        "confirmations": 0,
+        "params": {"get": "https://backend.swop.fi/exchangers/3PHaNgomBkrvEL2QnuJarQVJa71wjw9qiqG"}
       },
       {
-        "type": "jsonparse"
+        "type": "jsonparse",
+        "params": { "path": ["data", "A_asset_balance"]}
       },
       {
         "type": "multiply"

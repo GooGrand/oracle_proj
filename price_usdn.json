@@ -1,0 +1,31 @@
+{
+    "name": "Get > Uint256",
+    "initiators": [
+        {
+            "type": "cron",
+            "params": {
+                "schedule": "CRON_TZ=UTC */1 * * * *"
+            }
+        }
+    ],
+    "tasks": [
+      {
+        "type": "httpget",
+        "confirmations": 0,
+        "params": {"get": "https://backend.swop.fi/exchangers/3PHaNgomBkrvEL2QnuJarQVJa71wjw9qiqG"}
+      },
+      {
+        "type": "jsonparse",
+        "params": { "path": ["data", "B_asset_balance"]}
+      },
+      {
+        "type": "multiply"
+      },
+      {
+        "type": "ethuint256"
+      },
+      {
+        "type": "ethtx"
+      }
+    ]
+  }
