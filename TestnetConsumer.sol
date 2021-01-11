@@ -4,7 +4,7 @@ pragma solidity 0.7.0;
 import "https://github.com/smartcontractkit/chainlink/evm-contracts/src/v0.7/ChainlinkClient.sol";
 
 contract ATestnetConsumer is ChainlinkClient {
-  uint256 constant private ORACLE_PAYMENT = 0.1 * 10 ** 18; // 0.1 LINK;
+  uint256 constant private ORACLE_PAYMENT =  0.1 * 10 ** 18; // 0.1 LINK;
 
   uint256 public currentStateWaves;
   uint256 public currentStateEth;
@@ -43,14 +43,10 @@ contract ATestnetConsumer is ChainlinkClient {
      // Вторая функция получения данных с ethereum
   function requestEthereumState(address _oracle, string memory _jobId)
     public
-    returns (bytes32 requestId)
   {
       //Создаем объект запросов, указывая метод для записи в наш контракт
     Chainlink.Request memory req = buildChainlinkRequest(stringToBytes32(_jobId), address(this), this.fulfillEthereumState.selector);
     // Делаем запрос по адресу
-    req.add("get", "https://supplies.waves.exchange/supplies/USDN");
-    req.add("path", "supplies.1.confirmed");  // Ищем нужный ключ в пришедшем json
-    req.addInt("times", 1000000); // Приводим к нужному формату
     sendChainlinkRequestTo(_oracle, req, ORACLE_PAYMENT);
   }
 
@@ -114,9 +110,6 @@ contract ATestnetConsumer is ChainlinkClient {
   public
   {
     Chainlink.Request memory req = buildChainlinkRequest(stringToBytes32(_jobId), address(this), this.fulfillEthereumState.selector);
-    req.add("get", "https://backend.swop.fi/exchangers/3PHaNgomBkrvEL2QnuJarQVJa71wjw9qiqG"); // Неактуальная (идеал - пользоваться нодой), но рабочая ссылка
-    req.add("path", "supplies.1.confirmed");  // Ищем нужный ключ в пришедшем json
-    req.addInt("times", 1000000); // Приводим к нужному формату
     sendChainlinkRequestTo(_oracle, req, ORACLE_PAYMENT);
   }
 
@@ -125,9 +118,9 @@ contract ATestnetConsumer is ChainlinkClient {
   {
       uint256 k = supplyA * supplyB;
       int256 b = (-1 * (int256(k) / (int256(supplyA) - int256(amountA)))) + int256(supplyB);
-      int256 fee = b * int256(3 / 1000); // 0.3 fee of every transaction
+      int256 fee = 3 * b / 1000; // 0.3 fee of every transaction
       b = b - fee;
-      b = int256(5/10) * b;  //1 - tolerance -> 1 - 0.5 (of swop.fi) -> 0.5
+      b = b / 2;  //1 - tolerance -> 1 - 0.5 (of swop.fi) -> 0.5
       mainAsset = b;
   }
   
@@ -136,9 +129,9 @@ contract ATestnetConsumer is ChainlinkClient {
   {
       uint256 k = supplyA * supplyB;
       uint256 a = (k / (supplyB - amountB)) + supplyA;
-      uint256 fee = a * uint256(3 / 1000);
+      uint256 fee = 3 * a / 1000;
       a = a - fee;
-      a = uint256(5/10) * a; // (1 - tolerance) * a -> (1 - 0.5) -> 0.5
+      a = a / 2; // (1 - tolerance) * a -> (1 - 0.5) -> 0.5
       secondAsset = a;
   }
 }
